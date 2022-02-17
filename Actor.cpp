@@ -7,7 +7,7 @@ using namespace std;
 
 //BASE IMPLEMENTATION
 BaseActor :: BaseActor(int imageID, int startX, int startY, int dir, double size, int depth, StudentWorld* world)
-    :GraphObject(imageID, startX, startY, dir, size, depth)
+    :GraphObject(imageID, startX, startY, dir, depth, size)
 {
     m_world = world;
     m_alive = true;
@@ -40,58 +40,93 @@ Peach::Peach(int startX, int startY, StudentWorld* world, int invicible, int spe
 {
     m_hitpoint = startHitpoint;
     m_invicible = invicible;
-    m_specialPower = specialPower;
+    m_tempInvicible = 0; 
 }
 
 Peach :: ~Peach() {
 
 }
+//
+//bool BaseActor::Overlap(BaseActor* actor1, BaseActor* actor2) {
+//    double displacement_X = actor1->getX() - actor2->getX();
+//    double displacement_Y = actor1->getY() - actor2->getY();
+//
+//    if (SPRITE_WIDTH - 1 <= displacement_X <= SPRITE_WIDTH -1 && SPRITE_HEIGHT - 1 <= displacement_Y <= SPRITE_HEIGHT - 1) {
+//        return true;
+//    }
+//    return false; 
+//}
 
-bool BaseActor::Overlap(BaseActor* actor1, BaseActor* actor2) {
-    double displacement_X = actor1->getX() - actor2->getX();
-    double displacement_Y = actor1->getY() - actor2->getY();
-
-    if (SPRITE_WIDTH - 1 <= displacement_X <= SPRITE_WIDTH -1 && SPRITE_HEIGHT - 1 <= displacement_Y <= SPRITE_HEIGHT - 1) {
-        return true;
-    }
-    return false; 
-}
-
-bool Peach::canOverlap(BaseActor* actor1, BaseActor* actor2) {
-    
-}
+//bool Peach::canOverlap(BaseActor* actor1, BaseActor* actor2) {
+//    
+//}
 
 void Peach::doSomething()
 {
+    double x = getX();
+    double y = getY();
+
     if (!isAlive()) {
+        cerr << "died" << endl;
         return;
     }
 
-    if (getWorld()->objectBelowPeach()) {
-        moveTo(getX(), getY()-4);
+    if (peach_Invincible()) {
+        m_invicible--;
     }
 
-    if (getWorld()->getKey(m_keyValue)) {
-        switch (m_keyValue) {
+    if (peach_tempInvincible()) {
+        m_tempInvicible--;
+    }
+
+    getWorld()->BonkAt(this);
+
+    if (m_remaining_jump_distance > 0) {
+        y = y + 4;
+        if (getWorld()->BonkAt(x,y)){
+            m_remaining_jump_distance = 0;
+        }
+        else {
+            cerr << "Officially moved up" << endl;
+            moveTo(x,y);
+            m_remaining_jump_distance--;
+        }
+    }
+
+    else if (!getWorld()->objectBelowPeach()) {
+        y -= 4;
+        moveTo(x, y);
+    }
+
+
+    int keyMove; 
+    if (getWorld()->getKey(keyMove)) {
+        switch (keyMove) {
         case KEY_PRESS_UP:
-            if (getY() + 4 < VIEW_HEIGHT) {
-                moveTo(getX(), getY() + 4);
-            }
-            break;
-        case KEY_PRESS_DOWN:
-            if (getY() - 4 >= 0) {
-                moveTo(getX(), getY() - 4);
+            cerr << "Moved up" << endl;
+            if (getWorld()->objectThere(x, y - 1)) {
+                if (peach_jumpPower()) {
+                    m_remaining_jump_distance = 12;
+                }
+                else {
+                    m_remaining_jump_distance = 8;
+                }
+                getWorld()->playSound(SOUND_PLAYER_JUMP);
             }
             break;
         case KEY_PRESS_LEFT:
-            if (getX() - 4 >= 0) {
-                moveTo(getX() - 4, getY());
-            }
+            cerr << "Moved left" << endl;
+            setDirection(180);
+            x = x - 4;
+           if(!getWorld()->objectThere(x,y))
+                moveTo(x,y);      
             break;
         case KEY_PRESS_RIGHT:
-            if (getX() + 4 < VIEW_WIDTH) {
-                moveTo(getX() + 4, getY());
-            }
+            cerr << "Moved right" << endl;
+            setDirection(0);
+            x = x + 4;
+            if (!getWorld()->objectThere(x,y))
+                moveTo(x, y);
             break;
         case KEY_PRESS_SPACE:
             break;
@@ -115,6 +150,22 @@ void Peach::decreaseHitpoint(int amount)
 void Peach::increaseHitpoint(int amount)
 {
     m_hitpoint += amount;
+}
+
+bool  Peach::peach_Invincible() {
+    if (m_invicible > 0) {
+        return true;
+    }
+
+    return false; 
+}
+
+bool  Peach::peach_tempInvincible() {
+    if (m_tempInvicible > 0) {
+        return true;
+    }
+
+    return false;
 }
 
 //BLOCK IMPLEMENTATION 

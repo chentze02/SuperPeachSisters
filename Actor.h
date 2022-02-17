@@ -14,8 +14,10 @@ public:
     virtual ~BaseActor();
     virtual void doSomething() = 0;
     virtual bool isBlocker() { return false; }
+    virtual bool attacked() { return false;  }
+    virtual bool bonk() = 0;
     StudentWorld* getWorld() const;
-    bool Overlap(BaseActor* actor1, BaseActor* actor2);
+    //bool Overlap(BaseActor* actor1, BaseActor* actor2);
     bool isAlive() const;
     void setDead();
 private:
@@ -28,18 +30,29 @@ class Peach : public BaseActor {
         Peach(int startX, int startY, StudentWorld* world,  int invicible = 0, int specialPower = 0, int startHitpoint = 1);
         virtual ~Peach();
         virtual void doSomething();
+        virtual bool attacked() { return false; }
+        virtual bool bonk() { return true; }
         int getHitpoint() const;
         void decreaseHitpoint(int amount);
         void increaseHitpoint(int amount);
-        bool canOverlap(BaseActor* actor1, BaseActor* actor2);
-        bool objectBelow();
-        void peach_Invincible(); 
+        //bool canOverlap(BaseActor* actor1, BaseActor* actor2);
+        bool peach_starPower() { return m_starPower; }
+        bool peach_shootPower() { return m_shootPower; }
+        bool peach_jumpPower() { return m_jumpPower; }
+        bool peach_Invincible(); 
+        bool peach_tempInvincible();
+        bool peach_rechargeMode() { if (m_fireballRechargeTime == 0) { return true; } else if (m_fireballRechargeTime > 0) { m_fireballRechargeTime--; return false; } }
 
     private:
         int m_hitpoint; 
         int m_invicible;
-        int m_specialPower;
-        int m_keyValue;
+        int m_tempInvicible; 
+        int m_remaining_jump_distance;
+        int m_jumpTicks; 
+        int m_fireballRechargeTime; 
+        bool m_shootPower;
+        bool m_starPower;
+        bool m_jumpPower;
 };
 
 class Block : public BaseActor {
@@ -48,6 +61,7 @@ public:
     virtual ~Block();
     virtual void doSomething();
     virtual bool isBlocker() { return true; }
+    virtual bool bonk() { return true; }
 };
 
 

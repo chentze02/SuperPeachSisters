@@ -19,7 +19,12 @@ public:
   virtual int move();
   virtual void cleanUp();
   bool Overlap(BaseActor* actor1, BaseActor* actor2);
+  bool Overlap(double x1, double y1, double x2, double y2);
   bool objectBelowPeach();
+  bool BonkAt(BaseActor* actor1);
+  bool BonkAt(double x, double y);
+  bool objectBlocker(BaseActor* actor1);
+  bool objectThere(double x, double y); 
 
 private:
 	vector<BaseActor*> m_actors;

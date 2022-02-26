@@ -34,12 +34,14 @@ public:
   bool overlapsPeach(double x, double y) const;
   void bonkPeach();
   bool canDamage(double x, double y);
+  //bool canDamageShell(double x, double y);
   bool peachInvicible() { return m_peach->peach_Invincible(); }
   void reachFlag() { m_levelComplete = true; }
   void saveMario() { m_win = true; }
   void newShell(int x, int y, int dir); 
   void setPeachHP(int hp) const;
-
+  bool peachHasStarPower();
+  void piranhaFireball(int x, int y, int dir);
 
 
 private:

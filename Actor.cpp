@@ -62,10 +62,13 @@ bool Peach::bonk() {
         m_shootPower = false;
         m_jumpPower = false;
         decreaseHitpoint(1);
+        m_tempInvicible = 10;
+        cerr << "Peach hp decrease 1" << endl;
         if (getHitpoint() != 0) {
             getWorld()->playSound(SOUND_PLAYER_HURT);
         }
         else {
+            cerr << "Peach hp is " << getHitpoint() << endl;
             setDead();
             //getWorld()->peachdies(); ///////////////////////////////////////////////////////////////////////////
         }
@@ -84,11 +87,17 @@ void Peach::doSomething()
         return;
     }
 
-    if (peach_Invincible()) {
+    if (m_invicible == 0) {
+        m_starPower = false;
+    }
+
+    if (peach_starPower()) {
+        cerr << "Peach is invicible and would decrease" << endl;
         m_invicible--;
     }
 
     if (peach_tempInvincible()) {
+        cerr << "Peach is temp invicible and would decrease" << endl;
         m_tempInvicible--;
     }
 
@@ -96,7 +105,7 @@ void Peach::doSomething()
         m_fireballRechargeTime--;
     }
 
-    getWorld()->objectThere(x,y);
+    getWorld()->BonkAt(x,y);
 
     if (m_remaining_jump_distance > 0) {
         y = y + 4;
@@ -137,7 +146,10 @@ void Peach::doSomething()
             setDirection(180);
             x = x - 4;
            if(!getWorld()->objectThere(x,y))
-                moveTo(x,y);      
+                moveTo(x,y);
+           else {
+               getWorld()->BonkAt(x, y);
+           }
             break;
         case KEY_PRESS_RIGHT:
             cerr << "Moved right" << endl;
@@ -145,6 +157,9 @@ void Peach::doSomething()
             x = x + 4;
             if (!getWorld()->objectThere(x,y))
                 moveTo(x, y);
+            else {
+                getWorld()->BonkAt(x, y);
+            }
             break;
         case KEY_PRESS_SPACE:
             cerr << "Suppose to have fire" << endl;
@@ -222,6 +237,7 @@ bool Block::bonk() {
     double x = getX();
     double y = getY();
 
+
     if (m_goodie == 0) { 
         getWorld()->playSound(SOUND_PLAYER_BONK);
         return true;
@@ -243,6 +259,11 @@ bool Block::bonk() {
 Pipe::Pipe(int startX, int startY, StudentWorld* world) 
     : BaseActor(IID_PIPE, startX, startY, 0, 1, 2, world)
 {
+}
+
+bool Pipe:: bonk() {
+    getWorld()->playSound(SOUND_PLAYER_BONK);
+    return true;
 }
 
 //FLAG IMPLEMENTATION 
@@ -291,7 +312,7 @@ void Projectile::doSomething() {
             return;
         }
         else {
-            cerr << "fireball shot left" << endl;
+            cerr << "projectile shot left" << endl;
             moveTo(x, y);
         }
     }
@@ -302,7 +323,7 @@ void Projectile::doSomething() {
             return;
         }
         else {
-            cerr << "fireball shot right" << endl;
+            cerr << "projectile shot right" << endl;
             moveTo(x, y);
         }
     }
@@ -462,7 +483,7 @@ void Enemy::doSomething() {
     if (getWorld()->overlapsPeach(x, y) && !getWorld()->peachInvicible()) {
         cerr << "Peach has no invicible" << endl;
         getWorld()->bonkPeach();
-        setDead();      
+        //setDead();      
         return;
     }
 
@@ -472,10 +493,10 @@ void Enemy::doSomething() {
         attacked();
     }
 
-
     if (getDirection() == 0) {
         x = x + 1;
-        if (getWorld()->moveIfPossible(x, y)) {
+        int x1 = x + SPRITE_WIDTH - 1;
+        if (getWorld()->moveIfPossible(x1, y)) {
             moveTo(x, y);
         }
         else {
@@ -486,7 +507,8 @@ void Enemy::doSomething() {
     }
     else if (getDirection() == 180) {
         x = x - 1;
-        if (getWorld()->moveIfPossible(x, y)) {
+        int x1 = x - SPRITE_WIDTH + 1;
+        if (getWorld()->moveIfPossible(x1, y)) {
             moveTo(x, y);
         }
         else {
@@ -499,6 +521,7 @@ void Enemy::doSomething() {
 
 bool Enemy::attacked() {
     if (isDamageable()) {
+        cerr << "object is set dead" << endl;
         setDead(); 
         getWorld()->increaseScore(100); 
         return true;
@@ -523,13 +546,42 @@ bool Koopa::attacked() {
     double y = getY();
 
     cerr << "Koopa is attacked" << endl;
-    Enemy::doSomething();
+    Enemy::attacked();
     getWorld()->newShell(x, y, getDirection());
     return true;
    
 }
 
 ////PIRANHA IMPLEMENTATION
+Piranha::Piranha(int x, int y, StudentWorld* w) 
+    : Enemy(IID_PIRANHA, x, y, w)
+{
+    m_firedelay = 0;
+}
 
+void Piranha::doSomething() {
+
+    increaseAnimationNumber();
+    Enemy::doSomething();
+}
 
 //MARIO IMPLEMENTATION
+
+Mario::Mario(int x, int y, StudentWorld* world) 
+    :BaseActor(IID_MARIO, x, y, 0, 1.0, 1, world)
+{
+}
+
+void Mario::doSomething() {
+    if (!isAlive()) {
+        return;
+    }
+    double x = getX();
+    double y = getY();
+
+    if (this->getWorld()->overlapsPeach(x, y)) {
+        this->setDead();
+        this->getWorld()->increaseScore(1000);
+        this->getWorld()->saveMario();
+    }
+}

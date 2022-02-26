@@ -88,6 +88,7 @@ public:
     Pipe(int startX, int startY, StudentWorld* world);
     virtual ~Pipe() {}
     virtual void doSomething() {}
+    virtual bool bonk();
     virtual bool isBlocker() { return true; }
     virtual bool isDamageable() { return false; }
 };
@@ -132,6 +133,7 @@ class Shell : public Projectile
 {
 public:
     Shell(int x, int y, int dir, StudentWorld* w);
+    virtual ~Shell() {}
     virtual void doSomething();
 };
 
@@ -141,6 +143,7 @@ class Goodie : public BaseActor
 {
 public:
     Goodie(int imageID, int x, int y, int goodie, int score, StudentWorld* w);
+    virtual ~Goodie() {}
     virtual void doSomething();
     virtual bool isBlocker() { return false; }
     virtual bool isDamageable() { return false; }
@@ -154,6 +157,7 @@ class Flower : public Goodie
 {
 public:
     Flower(int x, int y, StudentWorld* w);
+    virtual ~Flower() {}
     virtual void doSomething();
 };
 
@@ -162,6 +166,7 @@ class Mushroom : public Goodie
 {
 public:
     Mushroom(int x, int y, StudentWorld* w);
+    virtual ~Mushroom() {}
     virtual void doSomething();
 };
 
@@ -209,7 +214,9 @@ class Piranha : public Enemy
 {
 public:
     Piranha(int x, int y, StudentWorld* w);
-    virtual bool isDamageable() { return false; }
+    virtual void doSomething();
+private:
+    int m_firedelay;
 };
 
 
@@ -220,7 +227,7 @@ public:
     Mario(int x, int y, StudentWorld* world);
     virtual void doSomething();
     virtual bool isBlocker() { return false; }
-    virtual bool isDamageable() { return true; }
+    virtual bool isDamageable() { return false; }
 };
 
 

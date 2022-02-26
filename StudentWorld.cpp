@@ -30,9 +30,16 @@ int StudentWorld::init()
     ostringstream oss;
     oss.setf(ios::fixed);
     oss.precision(2);
-    oss << "level0" << getLevel()  << ".txt";
+    if (getLevel() < 9) {
+        oss << "level0" << getLevel() << ".txt";
+    }
+    else {
+        oss << "level" << getLevel() << ".txt";
+    }
 
+    cerr << "The level is suppose to be" << getLevel() << endl;
     string level_file = oss.str();
+    cerr << level_file << endl;
     Level::LoadResult result = lev.loadLevel(level_file);
     if (result == Level::load_fail_file_not_found)
         cerr << "Could not find level01.txt data file" << endl;
@@ -83,14 +90,13 @@ int StudentWorld::init()
                             m_actors.push_back(new Pipe(lx * SPRITE_HEIGHT, ly * SPRITE_WIDTH, this));
                             break;
 
-                      /*  case Level::piranha: 
+                       /* case Level::piranha: 
                             Piranha* newpir = new Piranha(x * 8, y * 8, this);
                             m_actors.push_back(newpir);
-                            break;                       
-                        case Level::mario: 
-                            Mario* newmar = new Mario(x * 8, y * 8, this);
-                            m_actors.push_back(newmar);
-                            break;          */            
+                            break;    */                   
+                        case Level::mario:                            
+                            m_actors.push_back(new Mario(lx * SPRITE_HEIGHT, ly * SPRITE_WIDTH, this));
+                            break;                      
                     }
                 }
             }
@@ -110,6 +116,12 @@ int StudentWorld:: move()
             m_actors[i]->doSomething();
         }
 
+        if (!m_actors[i]->isAlive()) {
+            cerr << "Koopa is set to dead " << endl;
+            delete m_actors[i];
+            m_actors.erase(m_actors.begin() + i);
+        }
+
         if (!m_peach->isAlive()) {
             cerr << "Peach has died " << endl;
             decLives();            
@@ -127,10 +139,15 @@ int StudentWorld:: move()
     }
 
     if (m_levelComplete) {
-        delete m_peach;
+        cerr << "level completed" << endl;
         m_levelComplete = false;
         playSound(SOUND_FINISHED_LEVEL);
         return GWSTATUS_FINISHED_LEVEL;
+    }
+
+    if (m_win) {
+        playSound(SOUND_GAME_OVER);
+        return GWSTATUS_PLAYER_WON;
     }
 
 
@@ -140,7 +157,7 @@ int StudentWorld:: move()
 
 void StudentWorld::cleanUp()
 {
-    delete m_peach;
+        delete m_peach;
    /* m_actors.erase(m_actors.begin(), m_actors.end());
     m_actors.shrink_to_fit();*/
 
@@ -156,7 +173,7 @@ bool StudentWorld::Overlap(BaseActor* actor1, BaseActor* actor2) const {
     double displacement_X = actor1->getX() - actor2->getX();
     double displacement_Y = actor1->getY() - actor2->getY();
 
-    if (-(SPRITE_WIDTH + 1) <= displacement_X && displacement_X <= (SPRITE_WIDTH - 1) && -(SPRITE_HEIGHT + 1) <= displacement_Y  && displacement_Y  <= (SPRITE_HEIGHT - 1)) {
+    if (-(SPRITE_WIDTH - 1) <= displacement_X && displacement_X <= (SPRITE_WIDTH - 1) && -(SPRITE_HEIGHT - 1) <= displacement_Y  && displacement_Y  <= (SPRITE_HEIGHT - 1)) {
         return true;
     }
     return false;
@@ -268,7 +285,7 @@ void StudentWorld::setGameStatus() {
         powers += "Jump Power ";
     }
     if (m_peach->peach_starPower()) {
-        powers += "Start Power ";
+        powers += "Star Power ";
     }
 
     text << "Lives: " << getLives() << "  Level: " << getLevel() << "  Points: " << getScore() << "  " << powers;
@@ -336,7 +353,8 @@ void StudentWorld::bonkPeach() {
 
 bool StudentWorld::canDamage(double x, double y) {
     for (int i = 0; i < m_actors.size(); i++) {
-        if (Overlap(x, y, m_actors[i]->getX(), m_actors[i]->getY())) {
+        if (Overlap(x, y, m_actors[i]->getX(), m_actors[i]->getY()) && m_actors[i]->isDamageable()) {
+            cerr << "Can be attacked" << endl;
             if (m_actors[i]->attacked()) {
                 return true;
             }
@@ -355,4 +373,8 @@ void StudentWorld::setPeachHP(int hp) const {
     int toIncrease = hp - currHP;
 
     m_peach->increaseHitpoint(toIncrease);
+}
+
+bool StudentWorld::peachHasStarPower() {
+    return m_peach->peach_starPower();
 }

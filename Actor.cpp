@@ -69,8 +69,7 @@ bool Peach::bonk() {
         }
         else {
             cerr << "Peach hp is " << getHitpoint() << endl;
-            setDead();
-            //getWorld()->peachdies(); ///////////////////////////////////////////////////////////////////////////
+            setDead();           
         }
     }
 
@@ -148,7 +147,7 @@ void Peach::doSomething()
            if(!getWorld()->objectThere(x,y))
                 moveTo(x,y);
            else {
-               getWorld()->BonkAt(x, y);
+               getWorld()->BonkSound(x, y);
            }
             break;
         case KEY_PRESS_RIGHT:
@@ -158,7 +157,7 @@ void Peach::doSomething()
             if (!getWorld()->objectThere(x,y))
                 moveTo(x, y);
             else {
-                getWorld()->BonkAt(x, y);
+                getWorld()->BonkSound(x, y);
             }
             break;
         case KEY_PRESS_SPACE:
@@ -254,6 +253,10 @@ bool Block::bonk() {
     return true;
 }
 
+void Block::bonkForSound() {
+    getWorld()->playSound(SOUND_PLAYER_BONK);
+}
+
 //PIPE IMPLEMENTATION 
 
 Pipe::Pipe(int startX, int startY, StudentWorld* world) 
@@ -264,6 +267,10 @@ Pipe::Pipe(int startX, int startY, StudentWorld* world)
 bool Pipe:: bonk() {
     getWorld()->playSound(SOUND_PLAYER_BONK);
     return true;
+}
+
+void Pipe::bonkForSound() {
+    getWorld()->playSound(SOUND_PLAYER_BONK);
 }
 
 //FLAG IMPLEMENTATION 
@@ -355,6 +362,12 @@ PiranhaFireball::PiranhaFireball(int startX, int startY, int dir, StudentWorld* 
 void PiranhaFireball::doSomething() {
     double x = this->getX();
     double y = this->getY();
+
+    if (getWorld()->overlapsPeach(x, y)) {
+        setDead();
+        getWorld()->bonkPeach();
+        return;
+    }
 
     Projectile::doSomething();
 }
@@ -535,6 +548,54 @@ Goomba::Goomba(int x, int y, StudentWorld* w)
 {
 }
 
+void Goomba::doSomething() {
+
+    if (!isAlive()) {
+        return;
+    }
+
+    double x = this->getX();
+    double y = this->getY();
+
+    //cerr << "the invicible status is " << getWorld()->peachInvicible() << endl;
+
+    if (getWorld()->overlapsPeach(x, y) && !getWorld()->peachInvicible()) {
+        cerr << "Peach has no invicible" << endl;
+        getWorld()->bonkPeach();
+        //setDead();      
+        return;
+    }
+
+    else if (getWorld()->overlapsPeach(x, y) && getWorld()->peachInvicible()) {
+        cerr << "Peach has invicible" << endl;
+        getWorld()->playSound(SOUND_PLAYER_KICK);
+        attacked();
+    }
+
+    if (getDirection() == 0) {
+        x = x + 1;
+        if (getWorld()->moveIfPossible(x, y)) {
+            moveTo(x, y);
+        }
+        else {
+            x = x - 1;
+            setDirection(180);
+            moveTo(x, y);
+        }
+    }
+    else if (getDirection() == 180) {
+        x = x - 1;
+        if (getWorld()->moveIfPossible(x, y)) {
+            moveTo(x, y);
+        }
+        else {
+            x = x + 1;
+            setDirection(0);
+            moveTo(x, y);
+        }
+    }
+}
+
 ////KOOPA IMPLEMNTATION
 Koopa::Koopa(int x, int y, StudentWorld* w)
     : Enemy(IID_KOOPA, x, y, w)
@@ -561,8 +622,70 @@ Piranha::Piranha(int x, int y, StudentWorld* w)
 
 void Piranha::doSomething() {
 
+    double peach_x;
+    double peach_y; 
+    int peach_dir;
+    double piranha_x = getX();
+    double piranha_y = getY();
+
+
+    if (!isAlive()) {
+        return;
+    }
+
+    //cerr << "the invicible status is " << getWorld()->peachInvicible() << endl;
+
+    if (getWorld()->overlapsPeach(piranha_x, piranha_y) && !getWorld()->peachInvicible()) {
+        cerr << "Peach has no invicible" << endl;
+        getWorld()->bonkPeach();
+        //setDead();      
+        return;
+    }
+
+    else if (getWorld()->overlapsPeach(piranha_x, piranha_y) && getWorld()->peachInvicible()) {
+        cerr << "Peach has invicible" << endl;
+        getWorld()->playSound(SOUND_PLAYER_KICK);
+        attacked();
+    }
+
+    //Enemy::doSomething();
     increaseAnimationNumber();
-    Enemy::doSomething();
+    getWorld()->peachLocation(peach_x, peach_y, peach_dir);
+    double displacement_y = piranha_y - peach_y;
+    cerr << "pir y " << piranha_y << "peach y " << peach_y << endl;
+    cerr << displacement_y << endl;
+    if (displacement_y <= 1.5 * SPRITE_HEIGHT && displacement_y >= -(1.5 * SPRITE_HEIGHT)) {
+        cerr << "Peach within 1.5 range" << endl;
+        double displacement_x = piranha_x - peach_x;
+        if (displacement_x > 0 && displacement_x != 0) {
+            cerr << "Peach is on left" << endl;
+            setDirection(180);
+        }
+        else if (displacement_x < 0 && displacement_x != 0) {
+            cerr << "Peach is on right" << endl;
+            setDirection(0);
+        }
+
+        if (m_firedelay > 0) {
+            cerr << "Need to wait before fire" << endl;
+            m_firedelay--;
+            return;
+        }
+
+        else {
+            if(displacement_x < 8 * SPRITE_WIDTH && displacement_x > -(8 * SPRITE_WIDTH)){
+                cerr << "within 8 range" << endl;
+                getWorld()->piranhaFireball(piranha_x, piranha_y, getDirection());
+                cerr << "Fireball shot" << endl;
+                getWorld()->playSound(SOUND_PIRANHA_FIRE);
+                m_firedelay = 40; 
+            }
+        }
+    }
+    else {
+        return;
+    }
+
 }
 
 //MARIO IMPLEMENTATION

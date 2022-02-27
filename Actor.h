@@ -21,6 +21,7 @@ public:
     virtual bool bonk() {
         return false;
     }
+    virtual void bonkForSound() {};
     int direction() const { return m_dir;}
     StudentWorld* getWorld() const;
     //bool Overlap(BaseActor* actor1, BaseActor* actor2);
@@ -75,6 +76,7 @@ public:
     virtual bool isBlocker() { return true; }
     virtual bool isDamageable() { return false;  }
     virtual bool bonk();
+    virtual void bonkForSound();
     bool hasBeenBonked() { return m_hasBeenBonk; }
 
 private:
@@ -89,6 +91,7 @@ public:
     virtual ~Pipe() {}
     virtual void doSomething() {}
     virtual bool bonk();
+    virtual void bonkForSound();
     virtual bool isBlocker() { return true; }
     virtual bool isDamageable() { return false; }
 };
@@ -197,6 +200,7 @@ class Goomba : public Enemy
 {
 public:
     Goomba(int x, int y, StudentWorld* w);
+    virtual void doSomething();
 };
 
 //// Koopa

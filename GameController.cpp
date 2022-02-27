@@ -49,7 +49,7 @@ static const double FONT_SCALEDOWN = 760.0;
 static const double SCORE_Y = 3.8;
 static const double SCORE_Z = -10;
 
-static const int MS_PER_FRAME = 5;
+static const int MS_PER_FRAME = 8;
 
 int GameController::m_ms_per_tick = kDefaultMsPerTick;
 

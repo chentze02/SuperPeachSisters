@@ -89,11 +89,9 @@ int StudentWorld::init()
                         case Level::pipe:
                             m_actors.push_back(new Pipe(lx * SPRITE_HEIGHT, ly * SPRITE_WIDTH, this));
                             break;
-
-                       /* case Level::piranha: 
-                            Piranha* newpir = new Piranha(x * 8, y * 8, this);
-                            m_actors.push_back(newpir);
-                            break;    */                   
+                        case Level::piranha: 
+                            m_actors.push_back(new Piranha(lx * SPRITE_HEIGHT, ly * SPRITE_WIDTH, this));
+                            break;                       
                         case Level::mario:                            
                             m_actors.push_back(new Mario(lx * SPRITE_HEIGHT, ly * SPRITE_WIDTH, this));
                             break;                      
@@ -257,6 +255,18 @@ bool StudentWorld::BonkAt(BaseActor* actor1) {
     return false; 
 }
 
+bool StudentWorld::BonkSound(double x, double y) {
+    for (int i = 0; i < m_actors.size(); i++) {
+        double x2 = m_actors[i]->getX();
+        double y2 = m_actors[i]->getY();
+        if (Overlap(x, y, x2, y2)) {
+            m_actors[i]->bonkForSound();
+            return true;
+        }
+    }
+
+    return false;
+}
 
 bool StudentWorld::BonkAt(double x, double y) {
     for (int i = 0; i < m_actors.size(); i++) {
@@ -279,13 +289,13 @@ void StudentWorld::setGameStatus() {
     text.precision(2);
 
     if (m_peach->peach_shootPower()) {
-        powers += "Shoot Power ";
+        powers += "ShootPower! ";
     }
     if (m_peach->peach_jumpPower()) {
-        powers += "Jump Power ";
+        powers += "JumpPower! ";
     }
     if (m_peach->peach_starPower()) {
-        powers += "Star Power ";
+        powers += "StarPower! ";
     }
 
     text << "Lives: " << getLives() << "  Level: " << getLevel() << "  Points: " << getScore() << "  " << powers;
@@ -377,4 +387,14 @@ void StudentWorld::setPeachHP(int hp) const {
 
 bool StudentWorld::peachHasStarPower() {
     return m_peach->peach_starPower();
+}
+
+void StudentWorld::piranhaFireball(int x, int y, int dir) {
+    m_actors.push_back(new PiranhaFireball(x, y, dir, this));
+}
+
+void StudentWorld::peachLocation(double& x, double& y, int& dir) {
+    x = m_peach->getX();
+    y = m_peach->getY();
+    dir = m_peach->getDirection();
 }

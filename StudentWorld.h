@@ -24,6 +24,7 @@ public:
   bool objectBelowOthers(double x, double y) const;
   bool BonkAt(BaseActor* actor1);
   bool BonkAt(double x, double y);
+  bool BonkSound(double x, double y);
   bool objectBlocker(BaseActor* actor1);
   bool objectThere(double x, double y) const;
   void setGameStatus();
@@ -42,6 +43,7 @@ public:
   void setPeachHP(int hp) const;
   bool peachHasStarPower();
   void piranhaFireball(int x, int y, int dir);
+  void peachLocation(double& x, double& y, int& dir);
 
 
 private:
